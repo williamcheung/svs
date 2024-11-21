@@ -50,6 +50,8 @@ factors = [
 factors = [f'{i}. {f}' for i, f in enumerate(factors, start=1)]
 filter = {'date': {'$gt': '2024-09-30'}, 'form_type': {'$in': ['8-K', '10-Q']}}
 
+nbsp = '\u00A0'
+
 def compare_companies(compA: str, compB: str, factor: str, main_history: list) -> Generator:
     if compA == compB:
         raise ValueError('Please choose different companies to compare.')
@@ -141,7 +143,7 @@ with gr.Blocks(title=TITLE, theme=gr.themes.Glass(), css='''
     main_state = gr.State(main_chatbot.value)
 
     with gr.Row(variant='panel'):
-        compA_dropdown = gr.Dropdown(label=f'{COMP_A}', choices=zip(ticker_descs, tickers), interactive=True)
+        compA_dropdown = gr.Dropdown(label=f'{COMP_A} {nbsp}{nbsp}{nbsp}ℹ️(type-ahead supported :)', choices=zip(ticker_descs, tickers), interactive=True)
         compB_dropdown = gr.Dropdown(label=f'{COMP_B}', choices=zip(ticker_descs, tickers), interactive=True, value=tickers[1])
         factor_dropdown = gr.Dropdown(label=f'{INVESTMENT_FACTOR.title()}', choices=factors, interactive=True)
         with gr.Column():
