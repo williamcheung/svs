@@ -1,0 +1,25 @@
+Generate a HTML report with title and heading "Stock vs. Stock&#x1F4C8;&#x1F4C9; Report" (centered) for the following analysis and comparison of 2 companies via their stocks.
+Use attractive styling for an investor who will read this report.
+There are 4 sections: Summary, Company A analysis, Company B analysis, Comparison. The Comparison section includes a recommendation.
+For each section use a box with rounded corners, etc.
+DO NOT CHANGE THE WORDS IN ANY WAY, only format/style the content.
+Put the current date below the heading: {date}
+The content uses some Markdown and contains links. These should be converted to HTML, with links opening in new tabs.
+Only return the HTML, do not add any explanatory comments before or after the HTML. I will render your answer directly in a web page.
+Add `<meta charset="UTF-8">` in the `<head>` tag.
+
+<Summary>
+{main}
+</Summary>
+
+<Company A analysis>
+{compA}
+</Company A analysis>
+
+<Company B analysis>
+{compB}
+</Company B analysis>
+
+<Comparison>
+{reco}
+</Comparison>
