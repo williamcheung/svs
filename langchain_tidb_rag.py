@@ -40,7 +40,7 @@ def ask_question(ticker: str, question: str, filter={}) -> str:
     try:
         answer = chain.invoke(question)
     except Exception as e: # handle rate limit errors, etc. by trying the other model
-        print(f'Error: {e}')
+        print(f'Error for [{ticker}] {question}: {e}')
         print('Trying other model ...')
         model = get_llm_openai()
         chain = _create_rag_chain(retriever, prompt, model)

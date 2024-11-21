@@ -48,7 +48,7 @@ factors = [
     'Recent Developments in Statements'
 ]
 factors = [f'{i}. {f}' for i, f in enumerate(factors, start=1)]
-filter = {'date': {'$gt': '2024-09-30'}, 'form_type': {'$in': ['8-K', '10-Q']}}
+filter = {'date': {'$gt': '2024-06-30'}, 'form_type': {'$in': ['8-K', '10-K', '10-Q']}}
 
 nbsp = '\u00A0'
 
