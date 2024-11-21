@@ -1,0 +1,9 @@
+Given the {factor} details from the last quarter for stocks *{compA}* and *{compB}* below, compare the 2 stocks and make a recommendation.
+
+<{compA} {factor} details>
+{compA_answer}
+</{compA} {factor} details>
+
+<{compB} {factor} details>
+{compB_answer}
+</{compB} {factor} details>

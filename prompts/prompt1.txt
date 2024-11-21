@@ -1,0 +1,4 @@
+Earnings Performance analysis: How were (1) the Revenue, (2) the Net income, (3) the Earnings Per Share (EPS)? Give as much detail as possible for each.
+If possible, determine the Revenue growth trends (otherwise no need to mention the trends).
+If possible, determine the Net income growth and consistency (otherwise no need to mention the growth and consistency).
+If possible, determine the EPS trends (otherwise no need to mention the trends).
