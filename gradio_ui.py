@@ -50,7 +50,7 @@ factors = [
 factors = [f'{i}. {f}' for i, f in enumerate(factors, start=1)]
 filter = {'date': {'$gt': '2024-09-30'}, 'form_type': {'$in': ['8-K', '10-Q']}}
 
-def compare_companies(compA: str, compB: str, factor: str, main_history: list) -> Generator|tuple:
+def compare_companies(compA: str, compB: str, factor: str, main_history: list) -> Generator:
     if compA == compB:
         raise ValueError('Please choose different companies to compare.')
 
@@ -109,6 +109,13 @@ def create_chatbot(label: str, autoscroll=False) -> gr.Chatbot:
     )
     return chatbot
 
+def disable_buttons() -> list[dict]:
+    return enable_buttons(False)
+
+def enable_buttons(enable=True) -> list[dict]:
+    NUM_BUTTONS = 2
+    return [gr.update(interactive=enable) for _ in range(NUM_BUTTONS)]
+
 with gr.Blocks(title=TITLE, theme=gr.themes.Glass(), css='''
     footer {visibility: hidden}
 
@@ -139,7 +146,7 @@ with gr.Blocks(title=TITLE, theme=gr.themes.Glass(), css='''
         factor_dropdown = gr.Dropdown(label=f'{INVESTMENT_FACTOR.title()}', choices=factors, interactive=True)
         with gr.Column():
             compare_btn = gr.Button('Compare📈📉')
-            reset_btn = gr.Button('Download')
+            download_btn = gr.Button('Download')
 
     with gr.Row(variant='panel'):
         compA_chatbot = create_chatbot(COMP_A)
@@ -154,14 +161,22 @@ with gr.Blocks(title=TITLE, theme=gr.themes.Glass(), css='''
         '''
     )
 
-    compare_btn_state = gr.State(True)
     compare_btn.click(
         fn=lambda: (gr.update(value=[]), gr.update(value=[]), gr.update(value=[])),
         inputs=None,
         outputs=[compA_chatbot, compB_chatbot, reco_chatbot]
     ).then(
+        fn=disable_buttons,
+        inputs=None,
+        outputs=[compare_btn, download_btn]
+    ).then(
         fn=compare_companies,
         inputs=[compA_dropdown, compB_dropdown, factor_dropdown, main_state],
-        outputs=[compA_chatbot, compB_chatbot, reco_chatbot, main_chatbot])
+        outputs=[compA_chatbot, compB_chatbot, reco_chatbot, main_chatbot]
+    ).then(
+        fn=enable_buttons,
+        inputs=None,
+        outputs=[compare_btn, download_btn]
+    )
 
 demo.launch(server_name='0.0.0.0')
