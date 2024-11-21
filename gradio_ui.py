@@ -7,8 +7,9 @@ from gradio import ChatMessage
 from langchain_core.prompts import PromptTemplate
 from typing import Generator
 
-from langchain_tidb_rag import ask_question
+from langchain_tidb_rag import ask_question, ticker_in_data_file
 from llm import get_llm_sambanova
+from tidb_vector_store import all_tickers
 from utils import load_prompt
 
 TITLE = 'Stock vs. Stock'
@@ -23,15 +24,14 @@ When ready, click <u>Compare</u>.
 Caveat: <b>{TITLE}</b> recommendations are for <i>educational purposes only</i>. Getting rich💰not guaranteed.
 '''
 
-tickers = ['AAPL','MSFT','NVDA','AMZN','GOOG','GOOGL','META','BRK.B','LLY','TSLA','AVGO','WMT','JPM','UNH','V','XOM','MA','PG','JNJ','COST','ORCL','HD','ABBV','KO','BAC','MRK','NFLX','CVX','ADBE','PEP','TMO','CRM','TMUS','AMD','LIN','ACN','MCD','ABT','PM','DHR','CSCO','IBM','WFC','TXN','VZ','GE','QCOM','AXP','NOW','INTU','AMGN','ISRG','NEE','PFE','GS','CAT','SPGI','RTX','DIS','MS','T','CMCSA','UNP','PGR','UBER','AMAT','LOW','SYK','LMT','TJX','HON','BLK','BKNG','ELV','REGN','COP','BSX','VRTX','PLD','NKE','CB','MDT','SCHW','ETN','C','MMC','ADP','PANW','AMT','UPS','ADI','BX','DE','KKR','SBUX','ANET','MDLZ','BA','CI','HCA','FI','GILD','BMY','SO','MU','KLAC','LRCX','ICE','MO','SHW','DUK','MCO','CL','ZTS','WM','GD','INTC','CTAS','EQIX','CME','TT','WELL','NOC','AON','PH','CMG','ABNB','ITW','MSI','APH','TDG','PNC','SNPS','CVS','ECL','PYPL','USB','MMM','FDX','TGT','CDNS','BDX','EOG','MCK','AJG','CSX','ORLY','RSG','MAR','CARR','PSA','AFL','DHI','APD','CRWD','ROP','NXPI','NEM','NSC','FCX','FTNT','SLB','TFC','EMR','GEV','AEP','ADSK','TRV','O','CEG','MPC','COF','WMB','OKE','PSX','AZO','GM','HLT','MET','SPG','SRE','CCI','KDP','ROST','BK','PCAR','MNST','KMB','LEN','ALL','DLR','OXY','D','PAYX','CPRT','GWW','AIG','KMI','CHTR','COR','URI','JCI','STZ','FIS','KVUE','TEL','MSCI','IQV','KHC','FICO','LHX','RCL','VLO','AMP','F','PCG','ACGL','GIS','HUM','NDAQ','PRU','HSY','MPWR','CMI','ODFL','MCHP','PEG','A','EW','HES','IDXX','FAST','VRSK','GEHC','EXC','CTVA','SYY','HWM','EA','AME','IT','CTSH','KR','YUM','CNC','EXR','PWR','EFX','OTIS','RMD','ED','DOW','VICI','XEL','IR','GRMN','GLW','CBRE','HIG','DFS','BKR','NUE','EIX','DD','HPQ','AVB','CSGP','IRM','FANG','TRGP','XYL','EL','MLM','LYB','VMC','LULU','WEC','WTW','ON','BRO','LVS','MRNA','PPG','TSCO','ROK','MTD','EBAY','BIIB','CDW','WAB','EQR','AWK','ADM','MTB','NVR','FITB','DAL','GPN','DXCM','K','AXON','CAH','TTWO','PHM','ANSS','VLTO','VTR','IFF','ETR','DVN','CHD','DTE','SBAC','VST','FE','FTV','HAL','KEYS','TYL','STT','DOV','BR','ES','STE','RJF','ROL','SMCI','PPL','NTAP','TSN','SW','TROW','HPE','DECK','WRB','AEE','MKC','CBOE','WY','FSLR','WST','BF.B','INVH','LYV','GDDY','COO','WDC','CINF','ZBH','CPAY','STX','HBAN','BBY','ATO','ARE','LDOS','CMS','RF','CLX','CCL','HUBB','TER','PTC','BAX','TDY','WAT','BALL','BLDR','OMC','ESS','HOLX','LH','SYF','GPC','MOH','EQT','CFG','MAA','DRI','FOXA','APTV','PFG','PKG','ULTA','J','WBD','CNP','LUV','DG','HRL','VRSN','FOX','NTRS','AVY','L','JBHT','EXPE','EXPD','DGX','STLD','ZBRA','MAS','CTRA','EG','IP','ALGN','FDS','TXT','NRG','AMCR','UAL','SWKS','GEN','CAG','KIM','DOC','CPB','NWS','PODD','LNT','NWSA','UHS','KEY','NI','IEX','MRO','SWK','DPZ','UDR','RVTY','SNA','DLTR','AKAM','PNR','CF','NDSN','BG','ENPH','EVRG','REG','VTRS','TRMB','POOL','CE','CPT','SJM','JNPR','DVA','KMX','JKHY','INCY','CHRW','HST','EPAM','BXP','ALLE','IPG','FFIV','JBL','TAP','SOLV','TFX','AES','EMN','TECH','AOS','CTLT','RL','MGM','LKQ','HII','BEN','PNW','AIZ','QRVO','FRT','MKTX','CRL','TPR','HAS','MHK','MTCH','GL','APA','ALB','PAYC','LW','BIO','DAY','HSIC','GNRC','WYNN','MOS','CZR','NCLH','WBA','FMC','BWA','AAL','IVZ','PARA','BBWI','ETSY']
-tickers = ['HOLX','LH','SYF','GPC','MOH','EQT','CFG','MAA','DRI','FOXA','APTV','PFG','PKG','ULTA','J','WBD','CNP','LUV','DG','HRL','VRSN','FOX','NTRS','AVY','L','JBHT','EXPE','EXPD','DGX','STLD','ZBRA','MAS','CTRA','EG','IP','ALGN','FDS','TXT','NRG','AMCR','UAL','SWKS','GEN','CAG','KIM','DOC','CPB','NWS','PODD','LNT','NWSA','UHS','KEY','NI','IEX','MRO','SWK','DPZ','UDR','RVTY','SNA','DLTR','AKAM','PNR','CF','NDSN','BG','ENPH','EVRG','REG','VTRS','TRMB','POOL','CE','CPT','SJM','JNPR','DVA','KMX','JKHY','INCY','CHRW','HST','EPAM','BXP','ALLE','IPG','FFIV','JBL','TAP','SOLV','TFX','AES','EMN','TECH','AOS','CTLT','RL','MGM','LKQ','HII','BEN','PNW','AIZ','QRVO','FRT','MKTX','CRL','TPR','HAS','MHK','MTCH','GL','APA','ALB','PAYC','LW','BIO','DAY','HSIC','GNRC','WYNN','MOS','CZR','NCLH','WBA','FMC','BWA','AAL','IVZ','PARA','BBWI','ETSY']
-tickers = sorted(tickers)
+tickers = all_tickers
 
 ticker_descs = []
 with open('data/sec_company_tickers.json', 'r', encoding='utf-8') as f:
     all_comps = json.load(f)
 def get_comp_from_ticker(ticker: str) -> str:
-    return next(company_data['title'] for company_data in all_comps.values() if company_data['ticker'] == ticker)
+    return next(company_data['title'] for company_data in all_comps.values() if company_data['ticker'] == ticker_in_data_file(ticker))
+
 for ticker in tickers:
     ticker_descs.append(f'[{ticker}] {get_comp_from_ticker(ticker)}')
 

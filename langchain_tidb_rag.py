@@ -11,9 +11,9 @@ from llm import get_llm_sambanova, get_llm_openai
 
 def ask_question(ticker: str, question: str, filter={}) -> str:
     if ticker:
-        filter['ticker'] = ticker
+        filter['ticker'] = ticker_in_data_file(ticker)
     search_kwargs = {'filter': filter, 'k': 20}
-    retriever = get_cached_vector_store().as_retriever(search_kwargs=search_kwargs)
+    retriever = get_cached_vector_store(ticker).as_retriever(search_kwargs=search_kwargs)
 
     # define the RAG prompt
     template = '''Answer the question based only on the following context:
@@ -62,6 +62,9 @@ def _create_rag_chain(retriever, prompt, model):
     )
     chain = chain.with_types(input_type=str)
     return chain
+
+def ticker_in_data_file(ticker: str) -> str:
+    return ticker.replace('.', '-') # data file uses "-" instead of "." in actual symbol
 
 if __name__ == '__main__':
     # test usage
