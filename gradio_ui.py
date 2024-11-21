@@ -146,6 +146,14 @@ with gr.Blocks(title=TITLE, theme=gr.themes.Glass(), css='''
         compB_chatbot = create_chatbot(COMP_B)
         reco_chatbot = create_chatbot('SvS Recommendation')
 
+    gr.HTML(
+        '''
+        <div id='app-footer' style='text-align: center;'>
+            Built with <a href='https://community.sambanova.ai/t/supported-models/193' target='_blank'>Llama 3.1 405B free on SambaNova</a>
+        </div>
+        '''
+    )
+
     compare_btn_state = gr.State(True)
     compare_btn.click(
         fn=lambda: (gr.update(value=[]), gr.update(value=[]), gr.update(value=[])),
