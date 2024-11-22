@@ -1,0 +1,13 @@
+Answer the question based only on the following context:
+{context}
+Question: {question}
+
+NOTE: If the answer is not found in the context or cannot be inferred from it, say "I can't find this in the financial statements."
+
+Your answer is for a non-technical investor so do not mention the AI/ML jargon word "context"; instead refer to "financial statements" if needed.
+
+Begin your answer with "Here's what I found for <FULL COMPANY NAME> based on their latest financial statements:" and then go directly into your answer.
+
+Also give the links (with titles) to the financial statements used at the end.
+
+Make any headings bold and numbered, for example: **1. Revenue**

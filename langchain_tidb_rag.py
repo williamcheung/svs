@@ -1,6 +1,4 @@
 from dotenv import load_dotenv
-
-from tidb_vector_store import get_cached_vector_store
 load_dotenv()
 
 from langchain_core.output_parsers import StrOutputParser
@@ -8,6 +6,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 
 from llm import get_llm_sambanova, get_llm_openai
+from tidb_vector_store import get_cached_vector_store
+from utils import load_prompt
 
 def ask_question(ticker: str, question: str, filter={}) -> str:
     if ticker:
@@ -16,20 +16,7 @@ def ask_question(ticker: str, question: str, filter={}) -> str:
     retriever = get_cached_vector_store(ticker).as_retriever(search_kwargs=search_kwargs)
 
     # define the RAG prompt
-    template = '''Answer the question based only on the following context:
-    {context}
-    Question: {question}
-
-    NOTE: If the answer is not found in the context or cannot be inferred from it, say "I can't find this in the financial statements."
-
-    Your answer is for a non-technical investor so do not mention the AI/ML jargon word "context"; instead refer to "financial statements" if needed.
-
-    Begin your answer with "Here's what I found for <FULL COMPANY NAME> based on their latest financial statements:" and then go directly into your answer.
-
-    Also give the links (with titles) to the financial statements used at the end.
-
-    Make any headings bold and numbered, for example: **1. Revenue**
-    '''
+    template = load_prompt('rag_prompt.txt')
     prompt = ChatPromptTemplate.from_template(template)
 
     # define the RAG model
