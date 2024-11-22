@@ -167,3 +167,4 @@ ca_cert/*.pem
 data/**
 !data/sec_company_tickers.json
 # ^ include
+reports/*.html

@@ -1,12 +1,14 @@
 import asyncio
 import json
 import gradio as gr
+import time
 
 from concurrent.futures import ThreadPoolExecutor
 from gradio import ChatMessage
 from langchain_core.prompts import PromptTemplate
 from typing import Generator
 
+from generate_report import gen_report
 from langchain_tidb_rag import ask_question, ticker_in_data_file
 from llm import get_llm_sambanova
 from tidb_vector_store import all_tickers
@@ -23,11 +25,13 @@ When ready, click <u>Compare</u>.
 
 Caveat: <b>{TITLE}</b> recommendations are for <i>educational purposes only</i>. Getting rich💰not guaranteed.
 '''
+SUMMARY_LABEL = '<b>Summary:</b>'
+UTF8_ENCODING = 'utf-8'
 
 tickers = all_tickers
 
 ticker_descs = []
-with open('data/sec_company_tickers.json', 'r', encoding='utf-8') as f:
+with open('data/sec_company_tickers.json', 'r', encoding=UTF8_ENCODING) as f:
     all_comps = json.load(f)
 def get_comp_from_ticker(ticker: str) -> str:
     return next(company_data['title'] for company_data in all_comps.values() if company_data['ticker'] == ticker_in_data_file(ticker))
@@ -94,7 +98,7 @@ def compare_companies(compA: str, compB: str, factor: str, main_history: list) -
     summary_answer = summary_answer.content
     print(f'{summary_answer=}')
     main_history.pop() # remove "Summarizing..."
-    main_history.append(ai_message(f'<b>Summary:</b> {summary_answer}'))
+    main_history.append(ai_message(f'{SUMMARY_LABEL} {summary_answer}'))
 
     yield [ai_message(compA_answer)], [ai_message(compB_answer)], [ai_message(reco_answer)], gr.update(value=main_history, show_copy_all_button=True)
 
@@ -118,6 +122,23 @@ def enable_buttons(enable=True) -> list[dict]:
     NUM_BUTTONS = 2
     return [gr.update(interactive=enable) for _ in range(NUM_BUTTONS)]
 
+def generate_report(compA: list[dict], compB: list[dict], reco: list[dict], main: list[dict]) -> dict:
+    compA_content = _get_content(compA)
+    compB_content = _get_content(compB)
+    reco_content = _get_content(reco)
+    main_content = _get_content(main).lstrip(SUMMARY_LABEL).strip()
+
+    html = gen_report(compA_content, compB_content, reco_content, main_content)
+
+    file_path = f'reports/svs_report_{time.time_ns()}.html'
+    with open(file_path, 'w', encoding=UTF8_ENCODING) as f:
+        f.write(html)
+
+    return gr.update(value=file_path, visible=True)
+
+def _get_content(messages: list[dict]) -> str:
+    return [msg['content'] for msg in messages][-1]
+
 with gr.Blocks(title=TITLE, theme=gr.themes.Glass(), css='''
     footer {visibility: hidden}
 
@@ -135,6 +156,8 @@ with gr.Blocks(title=TITLE, theme=gr.themes.Glass(), css='''
             ''') as demo:
     gr.Markdown(f'<h1 style="text-align:center;">{TITLE}📈📉</h1>')
 
+    # layout
+
     with gr.Row():
         main_chatbot = create_chatbot('SvS bOT', True)
         main_chatbot.value = [ChatMessage('assistant', GREETING)]
@@ -148,7 +171,10 @@ with gr.Blocks(title=TITLE, theme=gr.themes.Glass(), css='''
         factor_dropdown = gr.Dropdown(label=f'{INVESTMENT_FACTOR.title()}', choices=factors, interactive=True)
         with gr.Column():
             compare_btn = gr.Button('Compare📈📉')
-            download_btn = gr.Button('Download')
+            save_btn = gr.Button('Create Report', interactive=False)
+
+    with gr.Row():
+        report_file = gr.File(label='Report', interactive=False, visible=False)
 
     with gr.Row(variant='panel'):
         compA_chatbot = create_chatbot(COMP_A)
@@ -163,14 +189,18 @@ with gr.Blocks(title=TITLE, theme=gr.themes.Glass(), css='''
         '''
     )
 
+    # handlers
+
+    buttons = [compare_btn, save_btn]
+
     compare_btn.click(
-        fn=lambda: (gr.update(value=[]), gr.update(value=[]), gr.update(value=[])),
+        fn=lambda: (gr.update(value=[]), gr.update(value=[]), gr.update(value=[]), gr.update(value=None, visible=False)),
         inputs=None,
-        outputs=[compA_chatbot, compB_chatbot, reco_chatbot]
+        outputs=[compA_chatbot, compB_chatbot, reco_chatbot, report_file]
     ).then(
         fn=disable_buttons,
         inputs=None,
-        outputs=[compare_btn, download_btn]
+        outputs=buttons
     ).then(
         fn=compare_companies,
         inputs=[compA_dropdown, compB_dropdown, factor_dropdown, main_state],
@@ -178,7 +208,25 @@ with gr.Blocks(title=TITLE, theme=gr.themes.Glass(), css='''
     ).then(
         fn=enable_buttons,
         inputs=None,
-        outputs=[compare_btn, download_btn]
+        outputs=buttons
+    )
+
+    save_btn.click(
+        fn=disable_buttons,
+        inputs=None,
+        outputs=buttons
+    ).then(
+        fn=generate_report,
+        inputs=[compA_chatbot, compB_chatbot, reco_chatbot, main_chatbot],
+        outputs=report_file
+    ).then(
+        fn=enable_buttons,
+        inputs=None,
+        outputs=buttons
+    ).then(
+        fn=lambda: gr.update(interactive=False),
+        inputs=None,
+        outputs=save_btn
     )
 
 demo.launch(server_name='0.0.0.0')
