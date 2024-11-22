@@ -60,10 +60,13 @@ def compare_companies(compA: str, compB: str, factor: str, main_history: list) -
     if compA == compB:
         raise ValueError('Please choose different companies to compare.')
 
-    factor_parts = factor.split('.')
-    factor_num = int(factor_parts[0].strip())
-    factor = factor_parts[1].strip()
-    question = load_prompt(f'prompt{factor_num}.txt')
+    try:
+        factor_parts = factor.split('.')
+        factor_num = int(factor_parts[0].strip())
+        factor = factor_parts[1].strip()
+        question = load_prompt(f'prompt{factor_num}.txt')
+    except:
+        question = f"{load_prompt('custom_prompt.txt')} {factor}"
 
     async def ask_questions_in_parallel():
         with ThreadPoolExecutor() as executor:
@@ -115,12 +118,13 @@ def create_chatbot(label: str, autoscroll=False) -> gr.Chatbot:
     )
     return chatbot
 
+num_buttons = -1 # will set later
+
 def disable_buttons() -> list[dict]:
     return enable_buttons(False)
 
 def enable_buttons(enable=True) -> list[dict]:
-    NUM_BUTTONS = 2
-    return [gr.update(interactive=enable) for _ in range(NUM_BUTTONS)]
+    return [gr.update(interactive=enable) for _ in range(num_buttons)]
 
 def generate_report(compA: list[dict], compB: list[dict], reco: list[dict], main: list[dict]) -> dict:
     compA_content = _get_content(compA)
@@ -181,17 +185,22 @@ with gr.Blocks(title=TITLE, theme=gr.themes.Glass(), css='''
         compB_chatbot = create_chatbot(COMP_B)
         reco_chatbot = create_chatbot('SvS Recommendation')
 
+    with gr.Row(equal_height=True):
+        custom_factor = gr.Text('AI strategy, AI features in products and services, AI adoption', show_label=False, container=False, interactive=True, max_lines=1, scale=7)
+        custom_compare_bn = gr.Button('Enter your own X-factor(s) to compare', scale=3)
+
     gr.HTML(
         '''
         <div id='app-footer' style='text-align: center;'>
-            Built with <a href='https://community.sambanova.ai/t/supported-models/193' target='_blank'>Llama 3.1 405B free on SambaNova</a>
+            Powered by <a href='https://community.sambanova.ai/t/supported-models/193' target='_blank'>Llama 3.1 405B free on SambaNova</a>
         </div>
         '''
     )
 
     # handlers
 
-    buttons = [compare_btn, save_btn]
+    buttons = [compare_btn, save_btn, custom_compare_bn]
+    num_buttons = len(buttons)
 
     compare_btn.click(
         fn=lambda: (gr.update(value=[]), gr.update(value=[]), gr.update(value=[]), gr.update(value=None, visible=False)),
@@ -204,6 +213,24 @@ with gr.Blocks(title=TITLE, theme=gr.themes.Glass(), css='''
     ).then(
         fn=compare_companies,
         inputs=[compA_dropdown, compB_dropdown, factor_dropdown, main_state],
+        outputs=[compA_chatbot, compB_chatbot, reco_chatbot, main_chatbot]
+    ).then(
+        fn=enable_buttons,
+        inputs=None,
+        outputs=buttons
+    )
+
+    custom_compare_bn.click(
+        fn=lambda: (gr.update(value=[]), gr.update(value=[]), gr.update(value=[]), gr.update(value=None, visible=False)),
+        inputs=None,
+        outputs=[compA_chatbot, compB_chatbot, reco_chatbot, report_file]
+    ).then(
+        fn=disable_buttons,
+        inputs=None,
+        outputs=buttons
+    ).then(
+        fn=compare_companies,
+        inputs=[compA_dropdown, compB_dropdown, custom_factor, main_state],
         outputs=[compA_chatbot, compB_chatbot, reco_chatbot, main_chatbot]
     ).then(
         fn=enable_buttons,
