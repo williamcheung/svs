@@ -17,7 +17,7 @@ from langchain_tidb_rag import ask_question, ticker_in_data_file
 from llm import get_llm_sambanova
 from tidb_vector_store import all_tickers
 from utils import load_prompt
-from yfinance_service import get_current_stock_prices
+from yfinance_service import get_current_stock_prices, get_stock_infos
 
 TITLE = 'Stock vs. Stock'
 COMP_A = 'Company A'
@@ -118,7 +118,11 @@ def get_extra_datas(factor_num: int, comps: list[str]) -> list[str|None]:
     match factor_num:
         case 3: # Valuation Metrics
             prices = get_current_stock_prices(comps)
-            return [f'Note the current stock price is {price}.' if price else None for price in prices]
+            infos = get_stock_infos(comps, ['totalRevenue', 'netIncomeToCommon'])
+            extra_datas1 = [f'Note the current stock price is {price}.' if price else '' for price in prices]
+            extra_datas2 = [f"Note the total revenue TTM is {info['totalRevenue']} and net income to common TTM is {info['netIncomeToCommon']}." if info else '' for info in infos]
+            extra_datas = [' '.join(a, b).strip() for a, b in zip(extra_datas1, extra_datas2)]
+            return extra_datas
     return [None] * len(comps)
 
 def ai_message(content: str) -> ChatMessage:
