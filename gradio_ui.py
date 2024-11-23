@@ -123,6 +123,10 @@ def get_extra_datas(factor_num: int, comps: list[str]) -> list[str|None]:
             extra_datas2 = [f"Note the total revenue TTM is {info['totalRevenue']} and net income to common TTM is {info['netIncomeToCommon']}." if info else '' for info in infos]
             extra_datas = [' '.join(a, b).strip() for a, b in zip(extra_datas1, extra_datas2)]
             return extra_datas
+        case 4: # Liquidity and Solvency
+            infos = get_stock_infos(comps, ['quickRatio', 'currentRatio', 'ebitda', 'totalDebt'])
+            extra_datas = [f"Note the quick ratio TTM is {info['quickRatio']}, current ratio TTM is {info['currentRatio']}, EBITDA TTM is {info['ebitda']}, and total debt TTM is {info['totalDebt']}." if info else '' for info in infos]
+            return extra_datas
     return [None] * len(comps)
 
 def ai_message(content: str) -> ChatMessage:
