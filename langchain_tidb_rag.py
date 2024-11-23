@@ -13,7 +13,10 @@ from utils import load_prompt
 
 MAX_VECTORS_RETURNED = int(os.getenv('MAX_VECTORS_RETURNED'))
 
-def ask_question(ticker: str, question: str, filter={}) -> str:
+def ask_question(ticker: str, question: str, filter={}, extra_data: str=str|None) -> str:
+    if extra_data:
+        question = f'{question}\n{extra_data}'
+
     if ticker:
         filter['ticker'] = ticker_in_data_file(ticker)
     search_kwargs = {'filter': filter, 'k': MAX_VECTORS_RETURNED}

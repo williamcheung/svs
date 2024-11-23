@@ -17,6 +17,7 @@ from langchain_tidb_rag import ask_question, ticker_in_data_file
 from llm import get_llm_sambanova
 from tidb_vector_store import all_tickers
 from utils import load_prompt
+from yfinance_service import get_current_stock_prices
 
 TITLE = 'Stock vs. Stock'
 COMP_A = 'Company A'
@@ -46,16 +47,16 @@ for ticker in tickers:
     ticker_descs.append(f'[{ticker}] {get_comp_from_ticker(ticker)}')
 
 factors = [
-    'Earnings Performance',
-    'Profitability',
-    'Valuation Metrics',
-    'Liquidity and Solvency',
-    'Cash Flow Health',
-    'Balance Sheet Strength',
-    'Risk Factors',
-    'Capital Allocation',
-    'Segment Performance',
-    'Recent Developments in Statements'
+    'Earnings Performance',     #1
+    'Profitability',            #2
+    'Valuation Metrics',        #3
+    'Liquidity and Solvency',   #4
+    'Cash Flow Health',         #5
+    'Balance Sheet Strength',   #6
+    'Risk Factors',             #7
+    'Capital Allocation',       #8
+    'Segment Performance',      #9
+    'Recent Developments in Statements' #10
 ]
 factors = [f'{i}. {f}' for i, f in enumerate(factors, start=1)]
 filter = {'date': {'$gt': MIN_DATE}, 'form_type': {'$in': ['8-K', '10-K', '10-Q']}}
@@ -71,13 +72,15 @@ def compare_companies(compA: str, compB: str, factor: str, main_history: list) -
         factor_num = int(factor_parts[0].strip())
         factor = factor_parts[1].strip()
         question = load_prompt(f'prompt{factor_num}.txt')
+        extra_datas = get_extra_datas(factor_num, [compA, compB])
     except:
         question = f"{load_prompt('custom_prompt.txt')} {factor}"
+        extra_datas = [None, None]
 
     async def ask_questions_in_parallel():
         with ThreadPoolExecutor() as executor:
             loop = asyncio.get_event_loop()
-            tasks = [loop.run_in_executor(executor, ask_question, comp, question, {**filter}) for comp in [compA, compB]]
+            tasks = [loop.run_in_executor(executor, ask_question, comp, question, {**filter}, extra_datas[i]) for i, comp in enumerate([compA, compB])]
             return await asyncio.gather(*tasks)
 
     answers = asyncio.run(ask_questions_in_parallel())
@@ -110,6 +113,13 @@ def compare_companies(compA: str, compB: str, factor: str, main_history: list) -
     main_history.append(ai_message(f'{SUMMARY_LABEL} {summary_answer}'))
 
     yield [ai_message(compA_answer)], [ai_message(compB_answer)], [ai_message(reco_answer)], gr.update(value=main_history, show_copy_all_button=True)
+
+def get_extra_datas(factor_num: int, comps: list[str]) -> list[str|None]:
+    match factor_num:
+        case 3: # Valuation Metrics
+            prices = get_current_stock_prices(comps)
+            return [f'Note the current stock price is {price}.' if price else None for price in prices]
+    return [None] * len(comps)
 
 def ai_message(content: str) -> ChatMessage:
     return ChatMessage('assistant', content)
