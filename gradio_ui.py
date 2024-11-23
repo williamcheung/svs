@@ -1,6 +1,10 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 import asyncio
 import json
 import gradio as gr
+import os
 import time
 
 from concurrent.futures import ThreadPoolExecutor
@@ -28,6 +32,8 @@ Caveat: <b>{TITLE}</b> recommendations are for <i>educational purposes only</i>.
 SUMMARY_LABEL = '<b>Summary:</b>'
 UTF8_ENCODING = 'utf-8'
 
+MIN_DATE = os.getenv('MIN_DATE')
+
 tickers = all_tickers
 
 ticker_descs = []
@@ -52,7 +58,7 @@ factors = [
     'Recent Developments in Statements'
 ]
 factors = [f'{i}. {f}' for i, f in enumerate(factors, start=1)]
-filter = {'date': {'$gt': '2024-06-30'}, 'form_type': {'$in': ['8-K', '10-K', '10-Q']}}
+filter = {'date': {'$gt': MIN_DATE}, 'form_type': {'$in': ['8-K', '10-K', '10-Q']}}
 
 nbsp = '\u00A0'
 

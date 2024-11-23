@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+import os
+
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
@@ -9,10 +11,12 @@ from llm import get_llm_sambanova, get_llm_openai
 from tidb_vector_store import get_cached_vector_store
 from utils import load_prompt
 
+MAX_VECTORS_RETURNED = int(os.getenv('MAX_VECTORS_RETURNED'))
+
 def ask_question(ticker: str, question: str, filter={}) -> str:
     if ticker:
         filter['ticker'] = ticker_in_data_file(ticker)
-    search_kwargs = {'filter': filter, 'k': 20}
+    search_kwargs = {'filter': filter, 'k': MAX_VECTORS_RETURNED}
     retriever = get_cached_vector_store(ticker).as_retriever(search_kwargs=search_kwargs)
 
     # define the RAG prompt
