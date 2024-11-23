@@ -116,6 +116,10 @@ def compare_companies(compA: str, compB: str, factor: str, main_history: list) -
 
 def get_extra_datas(factor_num: int, comps: list[str]) -> list[str|None]:
     match factor_num:
+        case 2: # Profitability
+            infos = get_stock_infos(comps, ['totalRevenue', 'netIncomeToCommon', 'profitMargins', 'grossMargins', 'ebitdaMargins', 'operatingMargins'])
+            extra_datas = [f"Note the total revenue TTM is {info['totalRevenue']}, net income to common TTM is {info['netIncomeToCommon']}, profit margins TTM is {info['profitMargins']}, gross margins TTM is {info['grossMargins']}, EBITDA margins TTM is {info['ebitdaMargins']}, and operating margins TTM is {info['operatingMargins']}." if info else '' for info in infos]
+            return extra_datas
         case 3: # Valuation Metrics
             prices = get_current_stock_prices(comps)
             infos = get_stock_infos(comps, ['totalRevenue', 'netIncomeToCommon'])
